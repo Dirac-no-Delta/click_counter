@@ -1,0 +1,275 @@
+<!--
+
+Copyright (c) 2024-present, Dirac-no-Delta
+Released under the MIT license
+
+-->  
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Signika:wght@700&display=swap" rel="stylesheet">
+    
+<style>
+
+*{
+    margin: 0;
+    padding: 0;
+}
+
+body{
+    text-align: center;
+    font-family: 'Roboto', sans-serif;
+    color: #000000;
+}
+ 
+.clickcounter{
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, 0);
+    width: 540px;
+    height: 540px;
+    padding : 5px 10px 5px 10px;
+    border-radius: 10px 10px 10px 10px;
+    background: rgb(187, 187, 187);
+
+    /* ▼ 数字パネル（加算していく値）の桁数 ▼ */
+    --digits_sub: 4;
+    /* ▼ カウンター（集計していく値）の桁数 ▼ */
+    --digits_main: 6;
+    /* ▼ 目標値 ▼ */
+    --goal: 10000;
+}
+
+.c-button {
+  appearance: none;
+  border: 0;
+  border-radius: 15px;
+  background: #000000;
+  color: #fff;
+  padding: 0px 10px;
+  font-size: 120px;
+}
+
+.c-button-small {
+  appearance: none;
+  border: 0;
+  border-radius: 15px;
+  background: #073b1f;
+  color: #fff;
+  padding: 0px 10px;
+  font-size: 72px;
+}
+
+.c-button-tiny {
+  appearance: none;
+  border: 0;
+  border-radius: 15px;
+  background: #573901;
+  color: #fff;
+  padding: 0px 10px;
+  font-size: 48px;
+}
+
+.c-button:hover {
+    opacity:0.6;
+}
+.c-button-small:hover {
+    opacity:0.6;
+}
+.c-button-tiny:hover {
+    opacity:0.6;
+}
+
+#progress {
+  width: 100%;
+  height: 20px;
+  text-align: center;
+  color: white;
+  margin: auto;
+  background-image: rgb(0, 128, 38);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+::-webkit-progress-bar {
+    background-color: rgba(255, 255, 255);
+    border-radius: 10px;
+}
+::-webkit-progress-value {
+  background-color: rgba(110, 164, 235);
+  border-radius: 10px;
+}
+
+#text_goal {
+    font-size: 48pt;
+    color: rgb(32, 72, 182);
+}
+
+p {
+  margin-bottom: 10px;
+}
+</style>
+</head>
+    
+<body>
+<div class="clickcounter">
+    
+    <table id="table_sub", style="font-size: 10pt; margin: auto;", border="0">
+      </table>
+      <p></p>
+      <button id="increment", class="c-button-tiny">▼+</button>
+      <p></p>
+      <table id="table_main", style="font-size: 10pt; margin: auto;", border="0">
+    </table>
+  
+    <p id="text_goal"></p>
+    <progress id="progress", value="0.0"></progress>
+    <p></p>
+    <div style="width: 100%; height: 100px; overflow-y: scroll; border: 1px #999999 solid;">
+        <table id="table_log", style="font-size: 24pt;", border="0">
+        </table>
+          </div>
+
+<script language="JavaScript">
+
+function update_count(id_prefix, digits, count) {
+    let count_copy = count;
+    for (let j = digits - 1; j >= 0; j--) {
+        let number = document.querySelector(id_prefix + j)
+        let num = Math.floor(count_copy / (10 ** j))
+        number.innerHTML = num;
+        count_copy %= (10 ** j);
+
+    }
+}
+
+const SelectElement = document.querySelector('.clickcounter');
+const SelectStyle = getComputedStyle(SelectElement);
+const digits_sub = Number(SelectStyle.getPropertyValue('--digits_sub'));
+const digits_main = Number(SelectStyle.getPropertyValue('--digits_main'));
+
+const goal = Number(SelectStyle.getPropertyValue('--goal'));
+
+var tableElement;
+var tr;
+
+tableElement = document.getElementById("table_sub");
+
+tr = document.createElement("tr");
+for (let i = 0; i < digits_sub; i++) {
+    let td = document.createElement("td");
+    let button = document.createElement("button");
+    button.innerHTML = 0;
+    button.className = "c-button-small"
+    button.id = "number_sub" + (digits_sub - 1 - i);
+    td.appendChild(button);
+    tr.appendChild(td);
+}
+tableElement.appendChild(tr);
+
+let count_sub = 0;
+
+for (let i = 0; i < digits_sub; i++) {
+    let button = document.querySelector("#number_sub" + i);
+    button.addEventListener("click", () => {
+        count_sub += 10 ** i;
+        update_count("#number_sub", digits_sub, count_sub);
+    });
+    button.addEventListener("contextmenu", () => {
+        count_sub -= 10 ** i;
+        update_count("#number_sub", digits_sub, count_sub);
+    });
+}
+
+tableElement = document.getElementById("table_main");
+
+tr = document.createElement("tr");
+for (let i = 0; i < digits_main; i++) {
+    let td = document.createElement("td");
+    let button = document.createElement("button");
+    button.innerHTML = 0;
+    button.className = "c-button"
+    button.id = "number_main" + (digits_main - 1 - i);
+    td.appendChild(button);
+    tr.appendChild(td);
+}
+tableElement.appendChild(tr);
+
+let text_goal = document.getElementById("text_goal");
+text_goal.innerHTML = "/"+ goal;
+
+let count_main = 0;
+
+for (let i = 0; i < digits_main; i++) {
+    let button = document.querySelector("#number_main" + i);
+    button.addEventListener("click", () => {
+        count_main += 10 ** i;
+        update_count("#number_main", digits_main, count_main);
+    });
+    button.addEventListener("contextmenu", () => {
+        count_main -= 10 ** i;
+        update_count("#number_main", digits_main, count_main);
+    });
+}
+
+let logtableElement = document.getElementById("table_log");
+let button = document.querySelector("#increment");
+
+button.addEventListener("click", () => {
+    if (count_sub != 0) {
+        let dataObj = new Date();
+        let hour = dataObj.getHours();
+        let min = dataObj.getMinutes();
+        let sec = dataObj.getSeconds();
+
+        let count_prev = count_main;
+        count_main += count_sub;
+        update_count("#number_main", digits_main, count_main);
+        count_sub = 0;
+        update_count("#number_sub", digits_sub, count_sub);
+
+        let tr = document.createElement("tr");
+        var td;
+
+        td = document.createElement("td");
+        td.innerHTML = count_prev;
+        tr.appendChild(td);
+
+        td = document.createElement("td");
+        td.innerHTML = "->";
+        tr.appendChild(td);
+
+        td = document.createElement("td");
+        td.innerHTML = count_main;
+        tr.appendChild(td);
+
+        td = document.createElement("td");
+        td.innerHTML = "(+" + (count_main - count_prev) + ")";
+        tr.appendChild(td);
+
+        td = document.createElement("td");
+        td.innerHTML = hour + ":" + min + ":" + sec;
+        tr.appendChild(td);
+
+        // + count_main + "(" + (count_main - count_prev) + ")"        
+        logtableElement.appendChild(tr);
+
+        let progress = document.querySelector("progress");
+        progress.value = Math.min(1.0, count_main / goal);
+    }
+    });
+
+  </script>
+</div>
+</body>
+</html>
+
+
